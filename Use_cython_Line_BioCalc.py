@@ -6,7 +6,7 @@ import Image as im
 import matplotlib.pyplot as plt
 # enter row you want to readout
 
-zeile = 400
+zeile = 500
 
 # enter folder with data
 
@@ -87,13 +87,13 @@ for thisline in string.split('\n'):
 			if len(word)<6 and float(word) >= wave_start +lookahead_min and float(word)<= wave_end - lookahead_min:
 				wave_block.append(float(word))
 	if len(thisline) == 0 and int(thickness) >= d_min and int(thickness) <= d_max:
-		sim_waves.append([thickness,wave_block])
+		sim_waves.append([thickness,len(wave_block),wave_block]) # calculate length of the waveblock since it will be needed later
 		wave_block=[]
 
 
 t_sum = 0
 
-for i in range(10):
+for i in range(1):
 
 	t1 = time.time()
 
@@ -105,38 +105,38 @@ for i in range(10):
 print t_sum/10
 
 
-# # write data into file
+# write data into file
 
-# p = open('boarder_line_fit_row_' + folder +  '_' + str(zeile) + '_tolerance_' + str(tolerance) + '_'+str(wave_start) + '_' + str(wave_end)  + 'nm.txt','w')
-# for i in range(len(dicke)):
-# 	p.write(str(dicke[i])+'\n')
-# p.close()	
+p = open('boarder_line_fit_row_' + folder +  '_' + str(zeile) + '_tolerance_' + str(tolerance) + '_'+str(wave_start) + '_' + str(wave_end)  + 'nm.txt','w')
+for i in range(len(dicke)):
+	p.write(str(dicke[i])+'\n')
+p.close()	
 
-# # convert strings in "dicke" to integers to plot in histogram
-# # make list without zeros to get real mean value
+# convert strings in "dicke" to integers to plot in histogram
+# make list without zeros to get real mean value
 
-# dicke_i = []
+dicke_i = []
 
-# for element in dicke:
-# 	dicke_i.append(int(element))
+for element in dicke:
+	dicke_i.append(int(element))
 
-# print 'Anzahl von Dicke = 0', dicke.count(0)
+print 'Anzahl von Dicke = 0', dicke.count(0)
 
-# ### plot data ###
+### plot data ###
 
-# plt.figure(1)
-# plt.plot(range(len(dicke)),dicke)
-# plt.axis([0,1280,d_min,d_max])
-# plt.savefig('both_boarders_' + folder + '_zeile_' +  str(zeile) + '_tolerance_' + str
-# (tolerance) + '_'+str(wave_start) + '_' + str(wave_end)  + 'nm.png')
+plt.figure(1)
+plt.plot(range(len(dicke)),dicke)
+plt.axis([0,1280,d_min,d_max])
+plt.savefig('both_boarders_' + folder + '_zeile_' +  str(zeile) + '_tolerance_' + str
+(tolerance) + '_'+str(wave_start) + '_' + str(wave_end)  + 'nm.png')
 
-# plt.figure(2)
-# plt.hist(dicke_i, bins = 100, color = 'g')
-# plt.grid()
-# plt.savefig('hist_' + 'both_boarders_' + folder + '_zeile_' +  str(zeile) + '_tolerance_' + str
-# (tolerance) + '_'+str(wave_start) + '_' + str(wave_end)  + 'nm.png')
+plt.figure(2)
+plt.hist(dicke_i, bins = 100, color = 'g')
+plt.grid()
+plt.savefig('hist_' + 'both_boarders_' + folder + '_zeile_' +  str(zeile) + '_tolerance_' + str
+(tolerance) + '_'+str(wave_start) + '_' + str(wave_end)  + 'nm.png')
 
-# plt.show()
+plt.show()
 
 
 

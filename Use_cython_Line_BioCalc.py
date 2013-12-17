@@ -1,4 +1,4 @@
-import cython_peakdetect as Fit
+import cython_Line_BioCalc as Fit
 import numpy as np
 import time
 import os 
@@ -6,11 +6,11 @@ import Image as im
 import matplotlib.pyplot as plt
 # enter row you want to readout
 
-zeile = 1022
+zeile = 400
 
 # enter folder with data
 
-folder = '52_Feature' 
+folder = '40x_500ms' 
 
 # enter name of simulation_file
 
@@ -20,9 +20,9 @@ sim_file = 'Sim_0.5Cr_20Au_Elastomer_RT601_15Au_500_750nm.txt'
 tolerance=1
 
 # define parameters for peakdetection  
-lookahead_min = 3 # something like peak width for thr minima
-lookahead_max = 2 # for the maxima --> should not be larger than lookahead_min
-delta = 3	# something like peak height
+lookahead_min = 4 # something like peak width for thr minima
+lookahead_max = 3 # for the maxima --> should not be larger than lookahead_min
+delta = 7	# something like peak height
 
 # chose wavelength range and step-width
 
@@ -32,8 +32,8 @@ wave_step = 1
 
 # chose elastomer thickness range
 
-d_min=9500
-d_max=13500
+d_min=6000
+d_max=9000
 
 # make wavelength list
 
@@ -59,7 +59,7 @@ for i in xrange(len(dateien)):
 		if int(dateien[i][:3]) >= wave_start and int(dateien[i][:3]) <= wave_end:
 			print dateien[i]
 			print counter
-			Img=im.open(folder + '/' + dateien[i])
+			Img=im.open(folder + '/' + dateien[i]).convert('L')
 			alle[counter]=image2array(Img)
 			counter+= 1
 
@@ -90,45 +90,53 @@ for thisline in string.split('\n'):
 		sim_waves.append([thickness,wave_block])
 		wave_block=[]
 
-t1 = time.time()
 
-dicke = Fit.c_Fit_Pixel(alle, zeile, sim_waves, waves, tolerance, lookahead_min, lookahead_max, delta)
+t_sum = 0
 
-t2 = time.time()
+for i in range(10):
 
-print t2-t1, 'Sekunden'
+	t1 = time.time()
 
-### plot data ###
+	dicke = Fit.c_Fit_Pixel(alle, zeile, sim_waves, waves, tolerance, lookahead_min, lookahead_max, delta)
 
-p = open('boarder_line_fit_row_' + folder +  '_' + str(zeile) + '_tolerance_' + str(tolerance) + '_'+str(wave_start) + '_' + str(wave_end)  + 'nm.txt','w')
-for i in range(len(dicke)):
-	p.write(str(dicke[i])+'\n')
-p.close()	
-
-# convert strings in "dicke" to integers to plot in histogram
-# make list without zeros to get real mean value
-
-dicke_i = []
-
-for element in dicke:
-	dicke_i.append(int(element))
-
-print 'Anzahl von Dicke = 0', dicke.count(0)
+	t2 = time.time()
+	print t2-t1, 'Sekunden'
+	t_sum +=t2-t1
+print t_sum/10
 
 
-plt.figure(1)
-plt.plot(range(len(dicke)),dicke)
-plt.axis([0,1280,0,12000])
-plt.savefig('both_boarders_' + folder + '_zeile_' +  str(zeile) + '_tolerance_' + str
-(tolerance) + '_'+str(wave_start) + '_' + str(wave_end)  + 'nm.png')
+# # write data into file
 
-plt.figure(2)
-plt.hist(dicke_i, bins = 100, color = 'g')
-plt.grid()
-plt.savefig('hist_' + 'both_boarders_' + folder + '_zeile_' +  str(zeile) + '_tolerance_' + str
-(tolerance) + '_'+str(wave_start) + '_' + str(wave_end)  + 'nm.png')
+# p = open('boarder_line_fit_row_' + folder +  '_' + str(zeile) + '_tolerance_' + str(tolerance) + '_'+str(wave_start) + '_' + str(wave_end)  + 'nm.txt','w')
+# for i in range(len(dicke)):
+# 	p.write(str(dicke[i])+'\n')
+# p.close()	
 
-plt.show()
+# # convert strings in "dicke" to integers to plot in histogram
+# # make list without zeros to get real mean value
+
+# dicke_i = []
+
+# for element in dicke:
+# 	dicke_i.append(int(element))
+
+# print 'Anzahl von Dicke = 0', dicke.count(0)
+
+# ### plot data ###
+
+# plt.figure(1)
+# plt.plot(range(len(dicke)),dicke)
+# plt.axis([0,1280,d_min,d_max])
+# plt.savefig('both_boarders_' + folder + '_zeile_' +  str(zeile) + '_tolerance_' + str
+# (tolerance) + '_'+str(wave_start) + '_' + str(wave_end)  + 'nm.png')
+
+# plt.figure(2)
+# plt.hist(dicke_i, bins = 100, color = 'g')
+# plt.grid()
+# plt.savefig('hist_' + 'both_boarders_' + folder + '_zeile_' +  str(zeile) + '_tolerance_' + str
+# (tolerance) + '_'+str(wave_start) + '_' + str(wave_end)  + 'nm.png')
+
+# plt.show()
 
 
 

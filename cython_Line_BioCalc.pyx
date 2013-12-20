@@ -25,12 +25,13 @@ cdef inline Fit(list thickness_pos, np.ndarray[double,ndim=1] exp_waves, unsigne
     cdef unsigned short L_exp_waves = len(exp_waves) # too not use the len() function too often
     cdef float summe=0
     cdef unsigned int counter = 0
-    cdef unsigned int position 
+    cdef unsigned int position, len_block 
 
     if L_exp_waves > 2: # first test if there are more than two minima
        # for waves in s_waves_arrays:
         for i in range(len(thickness_pos)): # do the following calculations for every simulated thickness
             position = thickness_pos[i][2]
+            len_block = thickness_pos[i][1]
             if thickness_pos[i][1] == L_exp_waves: # case for equal minimas (exp, sim)
                 
                 summe=0
@@ -42,11 +43,12 @@ cdef inline Fit(list thickness_pos, np.ndarray[double,ndim=1] exp_waves, unsigne
                 sim_min_waves[1].append(summe/float(L_exp_waves))
                 continue
 
-            # do the same if number of exp and sim is not equal
+            # do the same if number of exp and sim is not  equal
             if thickness_pos[i][1] == (L_exp_waves + 1):
                 summe=0
                 # check if the first elements (exp and sim) or the last tow are not matching
-                if _abs(sim_wave_blocks_array[position] - exp_waves[0]) > _abs(sim_wave_blocks_array[position+thickness_pos[i][1]-1]-exp_waves[-1]):
+                #if _abs(sim_wave_blocks_array[position] - exp_waves[0]) > _abs(sim_wave_blocks_array[position+thickness_pos[i][1]-1]-exp_waves[-1]):
+                if _abs(sim_wave_blocks_array[position] - exp_waves[0]) > _abs(sim_wave_blocks_array[position+len_block-1]-exp_waves[-1]):
                     for k in xrange(L_exp_waves):
                         summe+= _abs(sim_wave_blocks_array[position+k+1]-exp_waves[k])
                     sim_min_waves[0].append(thickness_pos[i][0])
@@ -63,7 +65,7 @@ cdef inline Fit(list thickness_pos, np.ndarray[double,ndim=1] exp_waves, unsigne
 
                 summe=0
                 #sim_waves_part_part = sim_waves_part[2]
-                if _abs(sim_wave_blocks_array[position] - exp_waves[0]) > _abs(sim_wave_blocks_array[position+thickness_pos[i][1]-1]-exp_waves[-1]):
+                if _abs(sim_wave_blocks_array[position] - exp_waves[0]) > _abs(sim_wave_blocks_array[position+len_block-1]-exp_waves[-1]):
                     for k in xrange(thickness_pos[i][1]):
                         summe+= _abs(sim_wave_blocks_array[position+k]-exp_waves[k+1])
                     sim_min_waves[0].append(thickness_pos[i][0])

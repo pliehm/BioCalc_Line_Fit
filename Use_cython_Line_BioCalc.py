@@ -77,6 +77,8 @@ positioncounter = 0
 
 sim_waves=[]
 wave_block=[]
+s_waves_arrays = []
+position = 0
 
 for thisline in string.split('\n'):
     if ('\t' in thisline) == False and len(thisline) != 0:
@@ -87,7 +89,9 @@ for thisline in string.split('\n'):
             if len(word)<6 and float(word) >= wave_start +lookahead_min and float(word)<= wave_end - lookahead_min:
                 wave_block.append(float(word))
     if len(thisline) == 0 and int(thickness) >= d_min and int(thickness) <= d_max:
-        sim_waves.append([thickness,len(wave_block),wave_block]) # calculate length of the waveblock since it will be needed later
+        sim_waves.append([thickness,len(wave_block),position]) # calculate length of the waveblock since it will be needed later
+        s_waves_arrays.append(np.array(wave_block,dtype=np.float))
+        position += len(wave_block)
         wave_block=[]
 
 
@@ -97,7 +101,7 @@ for i in range(1):
 
     t1 = time.time()
 
-    dicke = Fit.c_Fit_Pixel(alle, zeile, sim_waves, waves, tolerance, lookahead_min, lookahead_max, delta)
+    dicke = Fit.c_Fit_Pixel(alle, zeile, sim_waves, waves, tolerance, lookahead_min, lookahead_max, delta, s_waves_arrays)
 
     t2 = time.time()
     print t2-t1, 'Sekunden'

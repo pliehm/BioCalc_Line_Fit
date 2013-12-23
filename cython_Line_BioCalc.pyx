@@ -35,9 +35,12 @@ cdef Fit(list sim_waves, list exp_waves, int tolerance):
                 sim_waves_part_part = sim_waves_part[2]
                 for k in range(L_exp_waves): 
                     summe+= _abs(sim_waves_part_part[k]-exp_waves[k])
+                    if summe/(L_exp_waves )> tolerance:
+                        break
                 # append the thickness and error to a list
                 sim_min_waves[0].append(sim_waves_part[0])
                 sim_min_waves[1].append(summe/float(L_exp_waves))
+                counter+=1
                 continue
 
             # do the same if number of exp and sim is not equal
@@ -48,12 +51,16 @@ cdef Fit(list sim_waves, list exp_waves, int tolerance):
                 if _abs(sim_waves_part_part[0] - exp_waves[0]) > _abs(sim_waves_part_part[-1]-exp_waves[-1]):
                     for k in xrange(L_exp_waves):
                         summe+= _abs(sim_waves_part_part[k+1]-exp_waves[k])
+                        if summe/L_exp_waves > tolerance:
+                            break
                     sim_min_waves[0].append(sim_waves_part[0])
                     sim_min_waves[1].append(summe/float(L_exp_waves))
                     continue
                 else:
                     for k in xrange(L_exp_waves):
                         summe+= _abs(sim_waves_part_part[k]-exp_waves[k])
+                        if summe/L_exp_waves > tolerance:
+                            break
                     sim_min_waves[0].append(sim_waves_part[0])
                     sim_min_waves[1].append(summe/float(L_exp_waves))
                     continue
@@ -65,16 +72,20 @@ cdef Fit(list sim_waves, list exp_waves, int tolerance):
                 if _abs(sim_waves_part_part[0] - exp_waves[0]) > _abs(sim_waves_part_part[-1]-exp_waves[-1]):
                     for k in xrange(sim_waves_part[1]):
                         summe+= _abs(sim_waves_part_part[k]-exp_waves[k+1])
+                        if summe/(L_exp_waves-1) > tolerance:
+                            break
                     sim_min_waves[0].append(sim_waves_part[0])
                     sim_min_waves[1].append(summe/float(L_exp_waves))
                     continue
                 else:
                     for k in xrange(sim_waves_part[1]):
                         summe+= _abs(sim_waves_part_part[k]-exp_waves[k])
+                        if summe/(L_exp_waves-1) > tolerance:
+                            break
                     sim_min_waves[0].append(sim_waves_part[0])
-                    sim_min_waves[1].append(summe/float(L_exp_waves))
+                    sim_min_waves[1].append(summe/float(L_exp_waves-1))
                     continue
-
+        #print counter
 # return the thickness with minimum value
         if  len(sim_min_waves[0])>1 and (min(sim_min_waves[1]) < tolerance):
             return sim_min_waves[0][sim_min_waves[1].index(min(sim_min_waves[1]))]

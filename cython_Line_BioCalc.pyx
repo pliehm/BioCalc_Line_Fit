@@ -38,6 +38,8 @@ cdef inline Fit(list thickness_pos, np.ndarray[double,ndim=1] exp_waves, unsigne
                 # perform something like least-square with every exp-wavelength 
                 for k in range(L_exp_waves): 
                     summe+=_abs(sim_wave_blocks_array[position+k]-exp_waves[k])
+                    if summe/L_exp_waves > tolerance:
+                        break
                 # append the thickness and error to a list
                 sim_min_waves[0].append(thickness_pos[i][0])
                 sim_min_waves[1].append(summe/float(L_exp_waves))
@@ -51,12 +53,16 @@ cdef inline Fit(list thickness_pos, np.ndarray[double,ndim=1] exp_waves, unsigne
                 if _abs(sim_wave_blocks_array[position] - exp_waves[0]) > _abs(sim_wave_blocks_array[position+len_block-1]-exp_waves[-1]):
                     for k in xrange(L_exp_waves):
                         summe+= _abs(sim_wave_blocks_array[position+k+1]-exp_waves[k])
+                        if summe/L_exp_waves > tolerance:
+                            break
                     sim_min_waves[0].append(thickness_pos[i][0])
                     sim_min_waves[1].append(summe/float(L_exp_waves))
                     continue
                 else:
                     for k in xrange(L_exp_waves):
                         summe+= _abs(sim_wave_blocks_array[position+k]-exp_waves[k])
+                        if summe/L_exp_waves > tolerance:
+                            break
                     sim_min_waves[0].append(thickness_pos[i][0])
                     sim_min_waves[1].append(summe/float(L_exp_waves))
                     continue
@@ -68,12 +74,16 @@ cdef inline Fit(list thickness_pos, np.ndarray[double,ndim=1] exp_waves, unsigne
                 if _abs(sim_wave_blocks_array[position] - exp_waves[0]) > _abs(sim_wave_blocks_array[position+len_block-1]-exp_waves[-1]):
                     for k in xrange(thickness_pos[i][1]):
                         summe+= _abs(sim_wave_blocks_array[position+k]-exp_waves[k+1])
+                        if summe/(L_exp_waves-1) > tolerance:
+                            break
                     sim_min_waves[0].append(thickness_pos[i][0])
                     sim_min_waves[1].append(summe/float(L_exp_waves))
                     continue
                 else:
                     for k in xrange(thickness_pos[i][1]):
                         summe+= _abs(sim_wave_blocks_array[position+k]-exp_waves[k])
+                        if summe/(L_exp_waves-1) > tolerance:
+                            break
                     sim_min_waves[0].append(thickness_pos[i][0])
                     sim_min_waves[1].append(summe/float(L_exp_waves))
                     continue

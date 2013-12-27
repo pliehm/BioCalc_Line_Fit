@@ -57,8 +57,8 @@ counter=0
 for i in xrange(len(dateien)):
     if dateien[i][-5:]=='.tiff':
         if int(dateien[i][:3]) >= wave_start and int(dateien[i][:3]) <= wave_end:
-            print dateien[i]
-            print counter
+            # print dateien[i]
+            # print counter
             Img=im.open(folder + '/' + dateien[i]).convert('L')
             alle[counter]=image2array(Img)
             counter+= 1
@@ -89,7 +89,7 @@ for thisline in string.split('\n'):
             if len(word)<6 and float(word) >= wave_start +lookahead_min and float(word)<= wave_end - lookahead_min:
                 wave_block.append(float(word))
     if len(thisline) == 0 and int(thickness) >= d_min and int(thickness) <= d_max:
-        sim_waves.append([thickness,len(wave_block),position]) # calculate length of the waveblock since it will be needed later
+        sim_waves.append([int(thickness),len(wave_block),position]) # calculate length of the waveblock since it will be needed later
         s_waves_arrays.append(np.array(wave_block,dtype=np.float))
         position += len(wave_block)
         wave_block=[]

@@ -114,6 +114,108 @@ cdef inline Fit(list thickness_pos, np.ndarray[double,ndim=1] exp_waves, unsigne
     else:
         return 0
 
+
+@cython.boundscheck(False)
+cdef inline Fit_2(list thickness_pos, np.ndarray[double,ndim=1] exp_waves, unsigned short tolerance,np.ndarray[double,ndim=1] sim_wave_blocks_array,current_thickness, thickness_list):
+
+# cython type definition of the used objects
+ 
+    cdef list sim_min_waves = [[1000],[1000]] # dummy values to have two lists
+    cdef unsigned short i, k, min_thickness_i, max_thickness_i
+    cdef unsigned short L_exp_waves = len(exp_waves) # too not use the len() function too often
+    cdef float summe=0
+    cdef unsigned int counter = 0
+    cdef unsigned int position, len_block 
+    cdef int breaker = 0
+
+    if L_exp_waves > 2: # first test if there are more than two minima
+       # for waves in s_waves_arrays:
+        min_thickness_i = thickness_list.index(current_thickness-10)
+        max_thickness_i = thickness_list.index(current_thickness+10)
+        for i in range(min_thickness_i,max_thickness_i): # do the following calculations for every simulated thickness
+            position = thickness_pos[i][2]
+            len_block = thickness_pos[i][1]
+            if thickness_pos[i][1] == L_exp_waves: # case for equal minimas (exp, sim)
+                breaker = 0
+                summe=0
+                # perform something like least-square with every exp-wavelength 
+                for k in range(L_exp_waves): 
+                    summe+=_abs(sim_wave_blocks_array[position+k]-exp_waves[k])
+                    if summe/L_exp_waves > tolerance:
+                        breaker = 1
+                        break
+                # append the thickness and error to a list
+                if breaker == 1:
+                    continue
+                sim_min_waves[0].append(thickness_pos[i][0])
+                sim_min_waves[1].append(summe/float(L_exp_waves))
+                continue
+
+            # do the same if number of exp and sim is not  equal
+            if thickness_pos[i][1] == (L_exp_waves + 1):
+                breaker=0
+                summe=0
+                # check if the first elements (exp and sim) or the last tow are not matching
+                #if _abs(sim_wave_blocks_array[position] - exp_waves[0]) > _abs(sim_wave_blocks_array[position+thickness_pos[i][1]-1]-exp_waves[-1]):
+                if _abs(sim_wave_blocks_array[position] - exp_waves[0]) > _abs(sim_wave_blocks_array[position+len_block-1]-exp_waves[-1]):
+                    for k in xrange(L_exp_waves):
+                        summe+= _abs(sim_wave_blocks_array[position+k+1]-exp_waves[k])
+                        if summe/L_exp_waves > tolerance:
+                            breaker = 1
+                            break
+                    if breaker == 1:
+                        continue
+                    sim_min_waves[0].append(thickness_pos[i][0])
+                    sim_min_waves[1].append(summe/float(L_exp_waves))
+                    continue
+                else:
+                    for k in xrange(L_exp_waves):
+                        summe+= _abs(sim_wave_blocks_array[position+k]-exp_waves[k])
+                        if summe/L_exp_waves > tolerance:
+                            breaker = 1
+                            break
+                    if breaker == 1:
+                        continue
+                    sim_min_waves[0].append(thickness_pos[i][0])
+                    sim_min_waves[1].append(summe/float(L_exp_waves))
+                    continue
+
+            if thickness_pos[i][1] == (L_exp_waves - 1):
+                breaker = 0
+                summe=0
+                #sim_waves_part_part = sim_waves_part[2]
+                if _abs(sim_wave_blocks_array[position] - exp_waves[0]) > _abs(sim_wave_blocks_array[position+len_block-1]-exp_waves[-1]):
+                    for k in xrange(thickness_pos[i][1]):
+                        summe+= _abs(sim_wave_blocks_array[position+k]-exp_waves[k+1])
+                        if summe/(L_exp_waves-1) > tolerance:
+                            breaker = 0
+                            break
+                    if breaker == 1:
+                        continue
+                    sim_min_waves[0].append(thickness_pos[i][0])
+                    sim_min_waves[1].append(summe/float(L_exp_waves))
+                    continue
+                else:
+                    for k in xrange(thickness_pos[i][1]):
+                        summe+= _abs(sim_wave_blocks_array[position+k]-exp_waves[k])
+                        if summe/(L_exp_waves-1) > tolerance:
+                            breaker = 1
+                            break
+                    if breaker == 1:
+                        continue
+                    sim_min_waves[0].append(thickness_pos[i][0])
+                    sim_min_waves[1].append(summe/float(L_exp_waves))
+                    continue
+
+# return the thickness with minimum value
+        if  len(sim_min_waves[0])>1 and (min(sim_min_waves[1]) < tolerance):
+            return sim_min_waves[0][sim_min_waves[1].index(min(sim_min_waves[1]))]
+        else: 
+            return 0
+
+    else:
+        return 0
+
 # function to get minima of one array
 
 
@@ -158,7 +260,7 @@ cdef inline list peakdetect(y_axis, x_axis = None, unsigned short lookahead_min=
         if y < mx-delta and mx != 1000:
             #Maxima peak candidate found
             # lool ahead in signal to ensure that this is a peak and not jitter
-            if min(y_axis_list[index:index+lookahead_max]) < mx:
+            if max(y_axis_list[index:index+lookahead_max]) < mx:
                 #max_peaks.append([mxpos, mx])
                 dump.append(True)
                 #set algorithm to only find minima now
@@ -206,6 +308,11 @@ def c_Fit_Pixel(np.ndarray[DTYPE_t, ndim=3] data, unsigned int zeile, list thick
     cdef list thickness_ready=[]
     cdef unsigned int counter=0
     cdef np.ndarray[double,ndim=1] sim_wave_blocks_array
+    cdef unsigned int current_thickness = 0
+    cdef list thickness_list = []
+
+    for i in range(len(thickness_pos)):
+        thickness_list.append(int(thickness_pos[i][0]))
     # build another sim_waves_m list with different list class
     cdef list a = []
     for block in sim_wave_blocks_list:
@@ -216,7 +323,12 @@ def c_Fit_Pixel(np.ndarray[DTYPE_t, ndim=3] data, unsigned int zeile, list thick
         intensity = data[:,zeile, spalte]
         minima_exp = np.array(peakdetect(intensity, waves, lookahead_min,lookahead_max, delta),dtype=np.float)
         #print minima_exp
-        thickness_ready.append(Fit(thickness_pos, minima_exp,tolerance,sim_wave_blocks_array))
+        if current_thickness != 0:
+            current_thickness = Fit_2(thickness_pos, minima_exp,tolerance,sim_wave_blocks_array,current_thickness,thickness_list)
+            thickness_ready.append(current_thickness)
+        else:
+            current_thickness = Fit(thickness_pos, minima_exp,tolerance,sim_wave_blocks_array)
+            thickness_ready.append(current_thickness)
         #print counter        
         counter+=1
         
